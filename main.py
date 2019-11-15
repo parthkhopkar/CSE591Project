@@ -1,6 +1,6 @@
 import numpy as np
 import math
-
+from robot import Robot
 
 def observation(pose, env):
     dim = env.shape
@@ -25,6 +25,50 @@ def observation(pose, env):
         r2 = y+2
 
     return env[r1:r2, c1:c2]
+
+def get_static_inv_sensor_model(s_prob_val, obs):
+    """
+    :param s_prob_val: The previous occupancy probability value at the (x,y) position
+    :param obs: The observation at a particular (x,y) location. 0: Free | 1: Occupied
+    :return: The inverse sensor model
+    """
+    free_threshold = 0.2  # Probability below which position is certainly free
+    occupied_threshold = 0.8  # Probability above which position is certainly occupied
+    inv_sensor_low = 0.1
+    inv_sensor_high = 0.9
+    if s_prob_val <= free_threshold:
+        return inv_sensor_low  # Free, Free and Free, Occupied
+    elif s_prob_val >= occupied_threshold:
+        if obs:
+            return inv_sensor_high  # Occupied, Occupied
+        else:
+            return inv_sensor_low  # Occupied, Free
+    else:  # If unknown
+        if obs:
+            return inv_sensor_high  # Unknown, Occupied
+        else:
+            return inv_sensor_low  # Unknown, Free
+
+def get_dynamic_inv_sensor_model(s_prob_val, obs):
+    """
+    :param s_prob_val: The previous occupancy probability value at the (x,y) position
+    :param obs: The observation at a particular (x,y) location. 0: Free | 1: Occupied
+    :return: The inverse sensor model
+    """
+    free_threshold = 0.2  # Probability below which position is certainly free
+    occupied_threshold = 0.8  # Probability above which position is certainly occupied
+    inv_sensor_low = 0.1
+    inv_sensor_high = 0.9
+    if s_prob_val <= free_threshold:
+        if obs:
+            return inv_sensor_high  # Free, Occupied
+        else:
+            return  inv_sensor_low  # Free, Free
+    elif s_prob_val >= occupied_threshold:
+        return inv_sensor_low  # Occupied, Free and Occupied, Occupied
+    else:  # If unknown
+        return inv_sensor_low  # Unknown, Free and Unknown, Occupied
+
 
 def update_static_grid(S, inv_sensor_model):
     prev_S = S.copy()
@@ -67,5 +111,8 @@ if __name__ == "__main__":
     # print('Dynamic grid after update')
     # print(D)
 
-    print(observation((0,1), env))
+    print(observation((3, 0), env))
+
+    r1 = Robot('r1', )
+
 
