@@ -4,7 +4,7 @@ import pygame
 class OccupancyGrid(object):
     def __init__(self, mode=True, length=4, width=4):
         if not mode:
-            self.mat = np.random.uniform(0.5,0.5, (length,width))
+            self.mat = np.full((length,width), 0.5)
         if mode:
             self.mat = np.zeros((length,width), np.int)
         self.colors = np.array([[255, 255, 255], [250, 90, 120], [120, 250, 90]])
@@ -29,7 +29,12 @@ class OccupancyGrid(object):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-
+	
+	def get_arr(self):
+		return self.mat
+	
+	def update(self, matrix):
+		self.mat = matrix
 		
 if __name__ == "__main__":
     og = OccupancyGrid()
