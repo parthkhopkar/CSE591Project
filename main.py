@@ -33,8 +33,9 @@ def get_observation(pose, env):
 if __name__ == "__main__":
     dim = [4, 4]
     env = OccupancyGrid()  # Array for the environment
-    env.add_static_object(1, 1)
+    env.add_static_object(2, 1)
     env.add_static_object(3, 3)
+    env.add_dynamic_object(2, 3, 1, 3)
     start_pose = [3, 0]
     name = 3
     R1 = Robot(name, start_pose, dim)
@@ -46,6 +47,7 @@ if __name__ == "__main__":
         R1.setObs(get_observation(R1.step('o'), env))
         print(R1.S.get_arr())
         env.show()
+		env.step()
         old_pose = R1.get_position().copy()
         new_pose = R1.step(action)
         env.update_robot_position(R1.name, old_pose, new_pose)
