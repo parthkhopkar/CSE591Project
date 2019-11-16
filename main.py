@@ -42,15 +42,19 @@ if __name__ == "__main__":
     env.update_robot_position(name, start_pose, start_pose)
     # env.show()
     print(R1.S.get_arr())
-    actions = ['r', 'r', 'u', 'u', 'u', 'l', 'l']
-    for action in actions:
-        R1.setObs(get_observation(R1.step('o'), env))
-        print(R1.S.get_arr())
-        env.show()
-		env.step()
-        old_pose = R1.get_position().copy()
-        new_pose = R1.step(action)
-        env.update_robot_position(R1.name, old_pose, new_pose)
+    actions = ['r', 'r', 'u', 'u', 'u', 'l', 'l', 'd', 'd', 'd']
+    for x in range(10):
+        for action in actions:
+            R1.setObs(get_observation(R1.step('o'), env))
+            print('Static Occupancy Grid')
+            print(R1.S.get_arr())
+            print('Dynamic Occupancy Grid')
+            print(R1.D.get_arr())
+            old_pose = R1.get_position().copy()
+            if old_pose[1] == 0 and old_pose[0] == 1 and x == 2:
+                env.step()
+            new_pose = R1.step(action)
+            env.update_robot_position(R1.name, old_pose, new_pose)
 
     # # print('S:', S)
     # # print('D:', D)

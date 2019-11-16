@@ -9,16 +9,16 @@ class OccupancyGrid(object):
         if mode:
             self.mat = np.zeros((length, width), np.int)
         self.colors = np.array([[255, 255, 255], [250, 90, 120], [120, 250, 90], [90, 90, 50]])
-		self.nd = 0
+        self.nd = 0
 
     def add_static_object(self,posx, posy):
         self.mat[posx][posy] = 1
 
     def add_dynamic_object(self, posx, posy, posx1, posy1):
         self.mat[posx][posy] = 2
-		self.dot = {}
-		self.dot[self.nd] = ((posx,posy), (posx1, posy1))
-		self.nd += 1 
+        self.dot = {}
+        self.dot[self.nd] = ((posx,posy), (posx1, posy1))
+        self.nd += 1
 
     def show(self):
         print(self.mat)
@@ -45,15 +45,15 @@ class OccupancyGrid(object):
         self.mat[old_pose[0]][old_pose[1]] = 0
         self.mat[new_pose[0]][new_pose[1]] = name
 
-	def step(self):
-		for i in xrange(self.nd);
-			pose1,pose2 = self.dot[i]
-			if self.mat[pose1[0]][pose1[1]] == 2:
-				self.mat[pose1[0]][pose1[1]] = 0
-				self.mat[pose2[0]][pose2[1]] = 2 
-			else:
-				self.mat[pose1[0]][pose1[1]] = 2
-				self.mat[pose2[0]][pose2[1]] = 0 
+    def step(self):
+        for i in range(self.nd):
+            pose1,pose2 = self.dot[i]
+            if self.mat[pose1[0]][pose1[1]] == 2:
+                self.mat[pose1[0]][pose1[1]] = 0
+                self.mat[pose2[0]][pose2[1]] = 2
+            else:
+                self.mat[pose1[0]][pose1[1]] = 2
+                self.mat[pose2[0]][pose2[1]] = 0
 
 if __name__ == "__main__":
     og = OccupancyGrid()

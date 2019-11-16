@@ -48,6 +48,7 @@ class Robot(object):
             # print(pose, obs)
             # print(self.get_static_inv_sensor_model(pose, obs))
             self.update_static_grid(self.get_static_inv_sensor_model(pose, obs), pose)
+            self.update_dynamic_grid(self.get_dynamic_inv_sensor_model(pose, obs), pose)
 
 
  
@@ -61,12 +62,15 @@ class Robot(object):
         :return: The inverse sensor model
         """
         s_prob_val = self.S.get_arr()[pose]
-        free_threshold = 0.2  # Probability below which position is certainly free
-        occupied_threshold = 0.8  # Probability above which position is certainly occupied
-        inv_sensor_low = 0.1
-        inv_sensor_high = 0.9
+        free_threshold = 0.45  # Probability below which position is certainly free
+        occupied_threshold = 0.55  # Probability above which position is certainly occupied
+        inv_sensor_low = 0.05
+        inv_sensor_high = 0.85
         if s_prob_val <= free_threshold:
-            return inv_sensor_low  # Free, Free and Free, Occupied
+            if obs:
+                return 0.01
+            else:
+                return inv_sensor_low  # Free, Free and Free, Occupied
         elif s_prob_val >= occupied_threshold:
             if obs:
                 return inv_sensor_high  # Occupied, Occupied
@@ -85,17 +89,20 @@ class Robot(object):
         :return: The inverse sensor model
         """
         s_prob_val = self.S.get_arr()[pose]
-        free_threshold = 0.2  # Probability below which position is certainly free
-        occupied_threshold = 0.8  # Probability above which position is certainly occupied
-        inv_sensor_low = 0.1
-        inv_sensor_high = 0.9
+        free_threshold = 0.1  # Probability below which position is certainly free
+        occupied_threshold = 0.9  # Probability above which position is certainly occupied
+        inv_sensor_low = 0.05
+        inv_sensor_high = 0.99
         if s_prob_val <= free_threshold:
             if obs:
                 return inv_sensor_high  # Free, Occupied
             else:
-                return  inv_sensor_low  # Free, Free
+                return inv_sensor_low  # Free, Free
         elif s_prob_val >= occupied_threshold:
-            return inv_sensor_low  # Occupied, Free and Occupied, Occupied
+            if obs:
+                return inv_sensor_low  # Occupied, Free and Occupied, Occupied
+            else:
+                return 0.2
         else:  # If unknown
             return inv_sensor_low  # Unknown, Free and Unknown, Occupied
 
@@ -103,7 +110,7 @@ class Robot(object):
         prev_S = self.S.get_arr()[pose]
         S_update = 0
         for x, y in np.ndindex(self.S.get_arr().shape):
-            c = np.exp(np.log(inv_sensor_model / (1 - inv_sensor_model)) + np.log(prev_S / (1 - prev_S)))
+            c = np.exp(np.log(inv_sensor_model / (1 - inv_sensor_model)) + np.log(prev_S / (1.00001 - prev_S)))
             S_update = c/(1 + c)
         self.S.update(S_update, pose)
 
@@ -111,8 +118,8 @@ class Robot(object):
         prev_D = self.D.get_arr()[pose]
         D_update = 0
         for x, y in np.ndindex(self.D.get_arr().shape):
-            c = np.exp(np.log(inv_sensor_model / (1 - inv_sensor_model)) + np.log(prev_D / (1 - prev_D)))
-            D_update[x, y] = c / (1 + c)
+            c = np.exp(np.log(inv_sensor_model / (1 - inv_sensor_model)) + np.log(prev_D / (1.00001 - prev_D)))
+            D_update = c / (1 + c)
         self.D.update(D_update, pose)
 
 
