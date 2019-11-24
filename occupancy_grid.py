@@ -8,7 +8,7 @@ class OccupancyGrid(object):
             self.mat = np.full((length, width), 0.5)
         if mode:
             self.mat = np.zeros((length, width), np.int)
-        self.colors = np.array([[255, 255, 255], [250, 90, 120], [120, 250, 90], [90, 90, 50]])
+        self.colors = np.array([[255, 255, 255], [250, 90, 120], [0, 0, 0], [0, 0, 0], [0, 0, 0]])
         self.nd = 0
 
     def add_static_object(self,posx, posy):
@@ -20,15 +20,20 @@ class OccupancyGrid(object):
         self.dot[self.nd] = ((posx,posy), (posx1, posy1))
         self.nd += 1
 
-    def show(self):
+    def show(self, mode=True):
         print(self.mat)
         pygame.init()
         screen = pygame.display.set_mode((640, 480))
-        surface = pygame.pixelcopy.make_surface(self.colors[self.mat])
+        if mode:
+            surface = pygame.pixelcopy.make_surface(self.colors[self.mat])
+        else:
+            x = self.mat > 0.5
+            x = np.array(x, np.int)
+            surface = pygame.pixelcopy.make_surface(self.colors[x])
         surface = pygame.transform.scale(surface, (200, 200))
         screen.fill((30, 30, 30))
         screen.blit(surface, (100, 100))
-        pygame.display.flip()
+        pygame.display.update()
         running = True
         while running:
             for event in pygame.event.get():

@@ -10,8 +10,8 @@ class Robot(object):
         self.name = name
         self.limits = dims
         self.obs = None
-        self.S = OccupancyGrid(False)
-        self.D = OccupancyGrid(False)
+        self.S = OccupancyGrid(False, dims[0], dims[1])
+        self.D = OccupancyGrid(False, dims[0], dims[1])
 
     def move_right(self):
         ## check if no static  object
@@ -61,6 +61,7 @@ class Robot(object):
         :param obs: The observation at a particular (x,y) location. 0: Free | 1: Occupied
         :return: The inverse sensor model
         """
+        # print(self.S.get_arr())
         s_prob_val = self.S.get_arr()[pose]
         free_threshold = 0.45  # Probability below which position is certainly free
         occupied_threshold = 0.55  # Probability above which position is certainly occupied
