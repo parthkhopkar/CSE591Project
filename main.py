@@ -32,27 +32,38 @@ if __name__ == "__main__":
             robots.append(Robot(name, maze['r' + str(i)], dim))
             world.update_robot_position(name, maze['r' + str(i)], maze['r' + str(i)])
         # Initialize static objects
-        for i in maze['static']:
-            world.add_static_object(i[0], i[1])
+        for obj in maze['static']:
+            world.add_static_object(obj[0], obj[1])
+        # Initialize Dynamic Objects
+        for obj in maze['dynamic']:
+            print(obj)
+            world.add_dynamic_object(obj[0][0], obj[0][1], obj[1][0], obj[1][1])
         # Update poses
-        for a0, a1 in itertools.zip_longest(maze['r0_actions'], maze['r1_actions']):
-            if a0:
-                robots[0].setObs(get_observation(robots[0].step('o'), world))
-                old_pose = robots[0].get_position().copy()
-                new_pose = robots[0].step(a0)
-                world.update_robot_position(robots[0].name, old_pose, new_pose)
-            if a1:
-                robots[1].setObs(get_observation(robots[1].step('o'), world))
-                old_pose = robots[1].get_position().copy()
-                new_pose = robots[1].step(a1)
-                world.update_robot_position(robots[1].name, old_pose, new_pose)
+        for x in range(5):
+            if x is 2:
+                world.step()
+            for a0, a1 in itertools.zip_longest(maze['r0_actions'], maze['r1_actions']):
+                if a0:
+                    robots[0].setObs(get_observation(robots[0].step('o'), world))
+                    old_pose = robots[0].get_position().copy()
+                    new_pose = robots[0].step(a0)
+                    world.update_robot_position(robots[0].name, old_pose, new_pose)
+                if a1:
+                    robots[1].setObs(get_observation(robots[1].step('o'), world))
+                    old_pose = robots[1].get_position().copy()
+                    new_pose = robots[1].step(a1)
+                    world.update_robot_position(robots[1].name, old_pose, new_pose)
 
         world.show()
         np.set_printoptions(precision=1, suppress=True)
         print('Static Occupancy Grid for R0)')
         print(robots[0].S.get_arr())
+        print('Dynamic Occupancy Grid for R0)')
+        print(robots[0].D.get_arr())
         print('Static Occupancy Grid for R1)')
         print(robots[1].S.get_arr())
+        print('Dynamic Occupancy Grid for R1)')
+        print(robots[1].D.get_arr())
 
     """
     Single robot test
