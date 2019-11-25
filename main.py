@@ -53,6 +53,9 @@ if __name__ == "__main__":
                     old_pose = robots[1].get_position().copy()
                     new_pose = robots[1].step(a1)
                     world.update_robot_position(robots[1].name, old_pose, new_pose)
+            r0 = (robots[0].S.get_arr().copy(), robots[0].D.get_arr().copy(), robots[0].T.get_arr().copy())
+            robots[0].merge(robots[1].S.get_arr(), robots[1].D.get_arr(), robots[1].T.get_arr())
+            robots[1].merge(r0[0], r0[1], r0[2])
 
         world.show()
         np.set_printoptions(precision=1, suppress=True)
@@ -60,10 +63,14 @@ if __name__ == "__main__":
         print(robots[0].S.get_arr())
         print('Dynamic Occupancy Grid for R0)')
         print(robots[0].D.get_arr())
+        print('Time Map for R0)')
+        print(robots[0].T.get_arr())
         print('Static Occupancy Grid for R1)')
         print(robots[1].S.get_arr())
         print('Dynamic Occupancy Grid for R1)')
         print(robots[1].D.get_arr())
+        print('Time Map for R1)')
+        print(robots[1].T.get_arr())
 
     """
     Single robot test

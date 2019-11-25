@@ -12,8 +12,8 @@ class Robot(object):
         self.obs = None
         self.S = OccupancyGrid(False, dims[0], dims[1])
         self.D = OccupancyGrid(False, dims[0], dims[1])
-        self.T = OccupancyGrid(dims[0], dims[1])
-		self.C = 10.0
+        self.T = OccupancyGrid(length=dims[0], width=dims[1])
+        self.C = 80.0
 
     def move_right(self):
         ## check if no static  object
@@ -51,16 +51,27 @@ class Robot(object):
             # print(self.get_static_inv_sensor_model(pose, obs))
             self.update_static_grid(self.get_static_inv_sensor_model(pose, obs), pose)
             self.update_dynamic_grid(self.get_dynamic_inv_sensor_model(pose, obs), pose)
-			self.T.update(self.time, pose)
+            self.T.update(self.time, pose)
 
-		self.update_time()
+        self.update_time()
 
-	def update_time(self, pos):
-		delT = np.full((self.limits[0], self.limits[1]), self.time) - self.T.get_arr()
-		delT /= self.C
-		self.T.get_arr() -= delT 
- 
-		
+    def update_time(self):
+        observed = np.array(self.T.get_arr() > 0, np.int)
+        delT = np.full((self.limits[0], self.limits[1]), self.time) * observed - self.T.get_arr()
+        delT = delT/self.C
+        self.T.mat = self.T.mat - delT
+
+    def merge(self, robot_S, robot_D, robot_T):
+        for i in range(self.limits[0]):
+            for j in range(self.limits[1]):
+                if robot_T[i, j] > self.T.get_arr()[i, j]:
+                    self.S.update(robot_S[i, j], (i, j))
+                    self.D.update(robot_D[i, j], (i, j))
+                    self.T.update(robot_T[i, j], (i, j))
+
+
+
+
     def get_position(self):
         return self.pos
 
@@ -134,7 +145,7 @@ class Robot(object):
 
 
     def step(self,action):
-        self.time +=1
+        self.time += 1
         if action == "r":
             return self.move_right()
         elif action == "o":
