@@ -39,7 +39,7 @@ class OccupancyGrid(object):
         #time.sleep(1)
         self._image_num += 1
         str_num = "./images/000" + str(self._image_num)
-        file_name = "image" + str_num[-4:] + ".jpg"
+        file_name = str_num[-4:] + ".jpg"
         pygame.image.save(screen, file_name)
         '''running = True
         while running:
