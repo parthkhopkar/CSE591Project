@@ -12,6 +12,8 @@ class Robot(object):
         self.obs = None
         self.S = OccupancyGrid(False, dims[0], dims[1])
         self.D = OccupancyGrid(False, dims[0], dims[1])
+        self.T = OccupancyGrid(dims[0], dims[1])
+		self.C = 10.0
 
     def move_right(self):
         ## check if no static  object
@@ -49,9 +51,16 @@ class Robot(object):
             # print(self.get_static_inv_sensor_model(pose, obs))
             self.update_static_grid(self.get_static_inv_sensor_model(pose, obs), pose)
             self.update_dynamic_grid(self.get_dynamic_inv_sensor_model(pose, obs), pose)
+			self.T.update(self.time, pose)
 
+		self.update_time()
 
+	def update_time(self, pos):
+		delT = np.full((self.limits[0], self.limits[1]), self.time) - self.T.get_arr()
+		delT /= self.C
+		self.T.get_arr() -= delT 
  
+		
     def get_position(self):
         return self.pos
 
