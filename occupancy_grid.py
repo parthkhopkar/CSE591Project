@@ -1,5 +1,6 @@
 import numpy as np
 import pygame
+import time
 
 
 class OccupancyGrid(object):
@@ -8,7 +9,7 @@ class OccupancyGrid(object):
             self.mat = np.full((length, width), 0.5)
         if mode:
             self.mat = np.zeros((length, width), np.int)
-        self.colors = np.array([[255, 255, 255], [250, 90, 120], [0, 0, 0], [0, 0, 0], [0, 0, 0]])
+        self.colors = np.array([[255, 255, 255], [250, 90, 120], [0, 255, 0], [0, 0, 0], [0, 0, 0]])
         self.nd = 0
         self.dot = {}
 
@@ -34,11 +35,12 @@ class OccupancyGrid(object):
         screen.fill((30, 30, 30))
         screen.blit(surface, (100, 100))
         pygame.display.update()
-        running = True
+        time.sleep(1)
+        '''running = True
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    running = False'''
 
     def get_arr(self):
         return self.mat

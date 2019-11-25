@@ -7,7 +7,7 @@ import json
 
 def get_observation(pose, env):
     env1 = env.get_arr().copy()
-    env1 = np.pad(env1, [(1, 1), (1, 1)], constant_values=-1)
+    env1 = np.pad(env1, [(1, 1), (1, 1)], mode='constant', constant_values=-1)
     x, y = pose
     r1 = x
     r2 = r1 + 3
@@ -20,7 +20,7 @@ if __name__ == "__main__":
         2 robot test in 10X10 world
     """
     # Load world
-    with open('.\\worlds\\10X10.json') as file:
+    with open('./worlds/10X10.json') as file:
         maze = json.load(file)
         # Initialize maze
         dim = [maze['dim1'], maze['dim2']]
@@ -39,10 +39,11 @@ if __name__ == "__main__":
             print(obj)
             world.add_dynamic_object(obj[0][0], obj[0][1], obj[1][0], obj[1][1])
         # Update poses
-        for x in range(5):
+        for x in range(10):
             if x is 2:
                 world.step()
             for a0, a1 in itertools.zip_longest(maze['r0_actions'], maze['r1_actions']):
+                world.show()
                 if a0:
                     robots[0].setObs(get_observation(robots[0].step('o'), world))
                     old_pose = robots[0].get_position().copy()
