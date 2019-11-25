@@ -12,6 +12,7 @@ class OccupancyGrid(object):
         self.colors = np.array([[255, 255, 255], [250, 90, 120], [0, 255, 0], [0, 0, 0], [0, 0, 0]])
         self.nd = 0
         self.dot = {}
+        self._image_num = 0
 
     def add_static_object(self,posx, posy):
         self.mat[posx][posy] = 1
@@ -35,7 +36,11 @@ class OccupancyGrid(object):
         screen.fill((30, 30, 30))
         screen.blit(surface, (100, 100))
         pygame.display.update()
-        time.sleep(1)
+        #time.sleep(1)
+        self._image_num += 1
+        str_num = "./images/000" + str(self._image_num)
+        file_name = "image" + str_num[-4:] + ".jpg"
+        pygame.image.save(screen, file_name)
         '''running = True
         while running:
             for event in pygame.event.get():
