@@ -36,16 +36,6 @@ class OccupancyGrid(object):
         screen.fill((30, 30, 30))
         screen.blit(surface, (100, 100))
         pygame.display.update()
-        #time.sleep(1)
-        self._image_num += 1
-        str_num = "./images/000" + str(self._image_num)
-        file_name = str_num[-4:] + ".jpg"
-        pygame.image.save(screen, file_name)
-        '''running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False'''
 
     def get_arr(self):
         return self.mat
