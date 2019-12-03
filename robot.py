@@ -4,20 +4,23 @@ import math
 
 class Robot(object):
 
-    def __init__(self, name=0, coord=(1, 1), dims=[3, 3]):
+    def __init__(self, name=0, coord=(1, 1), dims=(30, 30)):
         self.time = 0
         self.pos = coord
         self.name = name
         self.limits = dims
         self.obs = None
+        self.dim = dims
         self.S = OccupancyGrid(False, dims[0], dims[1])
         self.D = OccupancyGrid(False, dims[0], dims[1])
         self.T = OccupancyGrid(length=dims[0], width=dims[1])
+        # self.env = OccupancyGrid(False, dims[0], dims[1])  # Occupancy Grid version of environment
         self.C = 80.0
         self.DT = 0.1  # time tick [s]
         self.SIM_TIME = 150.0  # simulation time [s]
         self.MAX_RANGE = 20.0  # maximum observation range
         self.M_DIST_TH = 2.0  # Threshold of Mahalanobis distance for data association.
+        self.gridSize = self.M_DIST_TH - 1
         self.STATE_SIZE = 3  # State size [x,y,yaw]
         self.LM_SIZE = 2  # LM state size [x,y]
         # EKF state covariance
@@ -74,7 +77,7 @@ class Robot(object):
         G, Fx = self.jacob_motion(xEst[0:S], u)
         PEst[0:S, 0:S] = G.T * PEst[0:S, 0:S] * G + Fx.T * self.Cx * Fx
         initP = np.eye(2)
-        print(z)
+        # print(z)
         # Update
         for iz in range(len(z[:, 0])):  # for each observation
             min_id = self.search_correspond_landmark_id(xEst, PEst, z[iz, 0:2])
@@ -131,7 +134,8 @@ class Robot(object):
             if d <= self.MAX_RANGE:
                 dn = d + np.random.randn() * self.Q_sim[0, 0] ** 0.5  # add noise
                 angle_n = angle + np.random.randn() * self.Q_sim[1, 1] ** 0.5  # add noise
-                zi = np.array([dn, angle_n, i])
+                # zi = np.array([dn, angle_n, i])
+                zi = np.array([d, angle, i])
                 z = np.vstack((z, zi))
 
         dObj = self.getDynamicObjects(time)
@@ -142,7 +146,58 @@ class Robot(object):
             u[1, 0] + np.random.randn() * self.R_sim[1, 1] ** 0.5]]).T
 
         xd = self.motion_model(xd, ud)
+
+        """
+        Code added for updating occupancy grids
+        """
+        # Get OG(Occupancy Grid) position of robot
+        x, y, theta = xTrue  # x, y = continuous location
+        X, Y = int(x/self.gridSize), int(y/self.gridSize)
+        env = np.zeros((self.dim[0], self.dim[1]))  # Occupancy Grid version of environment
+        print('Observation')
+        for iz in range(len(z[:, 0])):
+            x_obs = x + z[iz, 0] * math.cos(theta + z[iz, 1])
+            y_obs = y + z[iz, 0] * math.sin(theta + z[iz, 1])
+            print(x_obs, y_obs, iz)
+            env[int(x_obs/self.gridSize), int(y_obs/self.gridSize)] = 1
+
+        observation = self.get_observation((X, Y), env)
+        list_global = {}
+        for i in range(3):
+            for j in range(3):
+                if observation[i][j] == -1:
+                    continue
+                observation[i][j] = 0 if observation[i][j] >= 3 else observation[i][j]
+                gx = self.pos[0]
+                gy = self.pos[1]
+                lx, ly = 1, 1
+                nx = gx - (lx - i)
+                ny = gy - (ly - j)
+                list_global[(nx, ny)] = observation[i][j]
+        for pose, obs in list_global.items():
+            # print(pose, obs)
+            # print(self.get_static_inv_sensor_model(pose, obs))
+            self.update_static_grid(self.get_static_inv_sensor_model(pose, obs), pose)
+            self.update_dynamic_grid(self.get_dynamic_inv_sensor_model(pose, obs), pose)
+            self.T.update(self.time, pose)
+            # print(self.S.get_arr())
+            # print(self.D.get_arr())
+
+        # print(X, Y)
+        # print(z)
+        np.set_printoptions(linewidth=np.inf)
+        print(np.rot90(env))
         return xTrue, z, xd, ud, dObj
+
+    def get_observation(self, pose, env):
+        env1 = env.copy()
+        env1 = np.pad(env1, [(1, 1), (1, 1)], mode='constant', constant_values=-1)
+        x, y = pose
+        r1 = x
+        r2 = r1 + 3
+        c1 = y
+        c2 = y + 3
+        return env1[r1:r2, c1:c2]
 
     def motion_model(self, x, u):
         F = np.array([[1.0, 0, 0],
