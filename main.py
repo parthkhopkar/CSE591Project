@@ -136,7 +136,7 @@ def runEKFSLAM():
     RFID = np.array([[1.0, 1.0],
                      [15.0, 10.0],
                      [3.0, 15.0],
-                     [0.0, 20.0]])
+                     [11.0, 5.0]])
 
     # State Vector [x y yaw v]'
     xEst = np.zeros((STATE_SIZE, 1))
@@ -150,17 +150,18 @@ def runEKFSLAM():
     hxTrue = xTrue
     hxDR = xTrue
     ts = 0
+
     robot = Robot()
     while SIM_TIME >= time:
         ts += 1
         time += DT
-#         print(time)
-        if time > 60:
+        # print(time)
+        if time > 9:
             #print('LM changed')
             RFID = np.array([[1.0, 1.0],
-                     [10.0, 10.0],
-                     [6.0, 15.0],
-                     [0.0, 20.0]])
+                             [15.0, 10.0],
+                             [3.0, 15.0],
+                             [11.0, 9.0]])
 
         u = robot.calc_input()
 
