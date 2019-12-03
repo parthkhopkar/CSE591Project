@@ -4,7 +4,7 @@ import math
 
 class Robot(object):
 
-    def __init__(self, name=0, coord=(1, 1), dims=(30, 30)):
+    def __init__(self, name=0, coord=(1, 1), dims=(15, 15)):
         self.time = 0
         self.pos = coord
         self.name = name
@@ -20,7 +20,7 @@ class Robot(object):
         self.SIM_TIME = 150.0  # simulation time [s]
         self.MAX_RANGE = 20.0  # maximum observation range
         self.M_DIST_TH = 2.0  # Threshold of Mahalanobis distance for data association.
-        self.gridSize = self.M_DIST_TH - 1
+        self.gridSize = self.M_DIST_TH
         self.STATE_SIZE = 3  # State size [x,y,yaw]
         self.LM_SIZE = 2  # LM state size [x,y]
         # EKF state covariance
@@ -168,35 +168,38 @@ class Robot(object):
                 if observation[i][j] == -1:
                     continue
                 observation[i][j] = 0 if observation[i][j] >= 3 else observation[i][j]
-                gx = self.pos[0]
-                gy = self.pos[1]
+                gx = X
+                gy = Y
                 lx, ly = 1, 1
                 nx = gx - (lx - i)
                 ny = gy - (ly - j)
                 list_global[(nx, ny)] = observation[i][j]
         for pose, obs in list_global.items():
-            # print(pose, obs)
             # print(self.get_static_inv_sensor_model(pose, obs))
+            # print(pose, obs)
             self.update_static_grid(self.get_static_inv_sensor_model(pose, obs), pose)
             self.update_dynamic_grid(self.get_dynamic_inv_sensor_model(pose, obs), pose)
             self.T.update(self.time, pose)
-            # print(self.S.get_arr())
-            # print(self.D.get_arr())
 
         # print(X, Y)
         # print(z)
-        np.set_printoptions(linewidth=np.inf)
-        print(np.rot90(env))
+        np.set_printoptions(linewidth=np.inf, suppress=True, precision=1)
+        # print(np.rot90(env))
+        print('Static')
+        print(np.rot90(self.S.get_arr()))
+        print('Dynamic')
+        print(np.rot90(self.D.get_arr()))
         return xTrue, z, xd, ud, dObj
 
     def get_observation(self, pose, env):
+        range = 3
         env1 = env.copy()
         env1 = np.pad(env1, [(1, 1), (1, 1)], mode='constant', constant_values=-1)
         x, y = pose
         r1 = x
-        r2 = r1 + 3
+        r2 = r1 + range
         c1 = y
-        c2 = y + 3
+        c2 = y + range
         return env1[r1:r2, c1:c2]
 
     def motion_model(self, x, u):

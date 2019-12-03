@@ -211,7 +211,6 @@ def runEKFSLAM():
             plt.axis("equal")
             plt.grid(True)
             plt.pause(0.001)
-
 if __name__ == "__main__":
     runEKFSLAM()
 
