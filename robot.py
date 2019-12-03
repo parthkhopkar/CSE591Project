@@ -5,16 +5,18 @@ import math
 class Robot(object):
 
     def __init__(self, name=0, coord=(1, 1), dims=(10, 10)):
+        np.random.seed(42)
         self.time = 0
         self.pos = coord
         self.name = name
         self.limits = dims
         self.obs = None
         self.dim = dims
-        self.obs_grid_size = 5
+        self.obs_grid_size = 9
         self.S = OccupancyGrid(False, dims[0], dims[1])
         self.D = OccupancyGrid(False, dims[0], dims[1])
         self.T = OccupancyGrid(length=dims[0], width=dims[1])
+        self.dynamic_objects = []  # Store list of RFIDs of dynamic objectsS
         # self.env = OccupancyGrid(False, dims[0], dims[1])  # Occupancy Grid version of environment
         self.C = 80.0
         self.DT = 0.1  # time tick [s]
@@ -71,20 +73,43 @@ class Robot(object):
 
         self.update_time()
 
-    def ekf_slam(self, xEst, PEst, u, z, dObj):
+    def ekf_slam(self, xEst, PEst, u, z):
+        # Remove spurious landmark from xEst
+        # remove_list = []
+        # for i in range(3, len(xEst), 2):
+        #     X, Y = int(xEst[i] / self.gridSize), int(xEst[i + 1] / self.gridSize)
+        #     if self.S.get_arr()[X, Y] < 0.5:
+        #         remove_list.append(i)
+        #         remove_list.append(i + 1)
+        # xEst = np.delete(xEst, remove_list)
+        # xEst = xEst.reshape((xEst.shape[0], 1))
+        # print(len(xEst))
+
         # Predict
         S = self.STATE_SIZE
         xEst[0:S] = self.motion_model(xEst[0:S], u)
         G, Fx = self.jacob_motion(xEst[0:S], u)
         PEst[0:S, 0:S] = G.T * PEst[0:S, 0:S] * G + Fx.T * self.Cx * Fx
         initP = np.eye(2)
-        # print(z)
         # Update
+        print('Observation')
+        # print(z)
         for iz in range(len(z[:, 0])):  # for each observation
+            # If z does not correspond to a static landmark, continue
+            x, y, theta = xEst[0], xEst[1], xEst[2]
+            x_lm = x + z[iz, 0] * math.cos(theta + z[iz, 1])
+            y_lm = y + z[iz, 0] * math.sin(theta + z[iz, 1])
+            X, Y = int(x_lm/self.gridSize), int(y_lm/self.gridSize)
+            # print(x_lm, X, y_lm, Y)
+            # print('S', X, Y, self.S.get_arr()[X, Y])
+            if self.S.get_arr()[X, Y] < 0.9:
+                continue
+
             min_id = self.search_correspond_landmark_id(xEst, PEst, z[iz, 0:2])
 
-            if (z[iz, 2] in dObj):
-                continue
+            # if z[iz, 2] in self.dynamic_objects:
+            #     print('Not using', z[iz, 2], 'for localization')
+            #     continue
 
             nLM = self.calc_n_lm(xEst)
 
@@ -105,7 +130,6 @@ class Robot(object):
             PEst = (np.eye(len(xEst)) - (K @ H)) @ PEst
 
         xEst[2] = self.pi_2_pi(xEst[2])
-
         return xEst, PEst
 
     def calc_input(self):
@@ -114,7 +138,7 @@ class Robot(object):
         u = np.array([[v, yaw_rate]]).T
         return u
 
-    def getDynamicObjects(self, time):
+    def getDynamicObjects(self, D, z):
         if (time > 9):
             return [3]
         else:
@@ -139,8 +163,6 @@ class Robot(object):
                 # zi = np.array([d, angle, i])
                 z = np.vstack((z, zi))
 
-        dObj = self.getDynamicObjects(time)
-
         # add noise to input
         ud = np.array([[
             u[0, 0] + np.random.randn() * self.R_sim[0, 0] ** 0.5,
@@ -154,12 +176,16 @@ class Robot(object):
         # Get OG(Occupancy Grid) position of robot
         x, y, theta = xTrue  # x, y = continuous location
         X, Y = int(x/self.gridSize), int(y/self.gridSize)
+        obs_list = []
         env = np.zeros((self.dim[0], self.dim[1]))  # Occupancy Grid version of environment
         # print('Observation')
         for iz in range(len(z[:, 0])):
             x_obs = x + z[iz, 0] * math.cos(theta + z[iz, 1])
             y_obs = y + z[iz, 0] * math.sin(theta + z[iz, 1])
             # print(x_obs, y_obs, iz)
+            obs_list.append((x_obs, y_obs, iz))
+            if self.D.get_arr()[int(x_obs/self.gridSize), int(y_obs/self.gridSize)] > 0.6 and iz not in self.dynamic_objects:
+                self.dynamic_objects.append(iz)
             env[int(x_obs/self.gridSize), int(y_obs/self.gridSize)] = 1
 
         observation = self.get_observation((X, Y), env)
@@ -184,6 +210,12 @@ class Robot(object):
             self.update_dynamic_grid(self.get_dynamic_inv_sensor_model(pose, obs), pose)
             self.T.update(self.time, pose)
 
+        # dObj = self.getDynamicObjects(time)
+        # Check if any observation is a dynamic object
+        # for x, y, iz in obs_list:
+        #     if self.D.get_arr()[int(x/self.gridSize), int(y/self.gridSize)] == 1:
+        #         self.dynamic_objects.append(iz)
+
         # print(X, Y)
         # print(z)
         np.set_printoptions(linewidth=np.inf, suppress=True, precision=1)
@@ -192,7 +224,7 @@ class Robot(object):
         print('Dynamic')
         print(np.rot90(self.D.get_arr()))
         # print(np.rot90(env))
-        return xTrue, z, xd, ud, dObj
+        return xTrue, z, xd, ud
 
     def get_observation(self, pose, env):
         pad = int(self.obs_grid_size/2)

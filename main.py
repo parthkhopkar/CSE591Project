@@ -153,6 +153,7 @@ def runEKFSLAM():
 
     robot = Robot()
     while SIM_TIME >= time:
+        print(robot.dynamic_objects)
         ts += 1
         time += DT
         # print(time)
@@ -165,9 +166,9 @@ def runEKFSLAM():
 
         u = robot.calc_input()
 
-        xTrue, z, xDR, ud, dObj = robot.observation(xTrue, xDR, u, RFID, time)
+        xTrue, z, xDR, ud = robot.observation(xTrue, xDR, u, RFID, time)
                 
-        xEst, PEst = robot.ekf_slam(xEst, PEst, ud, z, dObj)
+        xEst, PEst = robot.ekf_slam(xEst, PEst, ud, z)
         
         #print(len(xEst))
             
