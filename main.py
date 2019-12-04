@@ -112,7 +112,7 @@ def runMapping(typ="MULTI_ROBOT"):
 
 def runEKFSLAM(dd=True):
     DT = 0.1  # time tick [s]
-    SIM_TIME = 150.0  # simulation time [s]
+    SIM_TIME = 200.0  # simulation time [s]
     STATE_SIZE = 3  # State size [x,y,yaw]
     
     show_animation = True
@@ -203,8 +203,12 @@ def runEKFSLAM(dd=True):
 
             # plot landmark
             for i in range(robot.calc_n_lm(xEst)):
-                plt.plot(xEst[STATE_SIZE + i * 2],
-                         xEst[STATE_SIZE + i * 2 + 1], "xg")
+                if (i in robot.dynamic_objects):
+                    plt.plot(xEst[STATE_SIZE + i * 2],
+                            xEst[STATE_SIZE + i * 2 + 1], "xg")
+                else:
+                    plt.plot(xEst[STATE_SIZE + i * 2],
+                            xEst[STATE_SIZE + i * 2 + 1], "xg")
 
             plt.plot(hxTrue[0, :],
                      hxTrue[1, :], "-b")
@@ -213,7 +217,7 @@ def runEKFSLAM(dd=True):
             plt.plot(hxEst[0, :],
                      hxEst[1, :], "-r")
             
-            time_text = plt.text(10.02, 10.95, '')
+            time_text = plt.text(10.02, 50.95, '')
             
             time_text2 = plt.text(45, 50.95, '')
             
@@ -228,6 +232,8 @@ def runEKFSLAM(dd=True):
             plt.yticks(minor_ticks)
             plt.grid(True)
             plt.pause(0.001)
+    robot.S.show(False)
+    robot.D.show(False)
 
 def runMultiRobotEKFSLAM(dd=False):
     DT = 0.1  # time tick [s]

@@ -31,11 +31,16 @@ class OccupancyGrid(object):
         else:
             x = self.mat > 0.5
             x = np.array(x, np.int)
-            surface = pygame.pixelcopy.make_surface(self.colors[x])
+            surface = pygame.pixelcopy.make_surface(self.colors[np.rot90(x.T,3)])
         surface = pygame.transform.scale(surface, (200, 200))
         screen.fill((30, 30, 30))
         screen.blit(surface, (100, 100))
         pygame.display.update()
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
 
     def get_arr(self):
         return self.mat
