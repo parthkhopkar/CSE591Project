@@ -34,12 +34,12 @@ class Robot(object):
         #  Simulation parameter
         self.Q_sim = np.diag([0.2, np.deg2rad(1.0)]) ** 2
         self.R_sim = np.diag([1.0, np.deg2rad(10.0)]) ** 2
-        self.xEst = init_coord
-        self.PEst = np.eye(self.STATE_SIZE)
-        self.xDR = np.zeros((self.STATE_SIZE, 1))  # Dead reckoning
+        # self.xEst = init_coord
+        # self.PEst = np.eye(self.STATE_SIZE)
+        # self.xDR = np.zeros((self.STATE_SIZE, 1))  # Dead reckoning
 
-    def get_estimate(self):
-        return self.xEst, self.PEst, self.xDR
+    # def get_estimate(self):
+    #     return self.xEst, self.PEst, self.xDR
 
     def move_right(self):
         ## check if no static  object
