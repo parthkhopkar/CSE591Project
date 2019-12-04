@@ -5,11 +5,11 @@ import time as t
 
 class Robot(object):
 
-    def __init__(self, name=0, coord=(1, 1), dims=(10, 10), seed=42, dynamic_detection=True):
+    def __init__(self, name=0, init_coord=(1, 1), dims=(10, 10), seed=42, dynamic_detection=True):
         self.seed = seed
         self.dynamic_detection = dynamic_detection
         self.time = 0
-        self.pos = coord
+        self.pos = init_coord
         self.name = name
         self.limits = dims
         self.obs = None
@@ -34,6 +34,12 @@ class Robot(object):
         #  Simulation parameter
         self.Q_sim = np.diag([0.2, np.deg2rad(1.0)]) ** 2
         self.R_sim = np.diag([1.0, np.deg2rad(10.0)]) ** 2
+        self.xEst = init_coord
+        self.PEst = np.eye(self.STATE_SIZE)
+        self.xDR = np.zeros((self.STATE_SIZE, 1))  # Dead reckoning
+
+    def get_estimate(self):
+        return self.xEst, self.PEst, self.xDR
 
     def move_right(self):
         ## check if no static  object
@@ -136,7 +142,7 @@ class Robot(object):
         xEst[2] = self.pi_2_pi(xEst[2])
         return xEst, PEst
 
-    def calc_input(self):
+    def calc_input(self, v=1.0, y=0.1):
         v = 1.0  # [m/s]
         yaw_rate = 0.1  # [rad/s]
         u = np.array([[v, yaw_rate]]).T
