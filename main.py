@@ -267,14 +267,22 @@ def runMultiRobotEKFSLAM(dd=False):
                      [27.0, 17.5],
                      [17.0, 27.0],
                      [17.0, 3.0],
-                     [32.5, 7.0]])
+                     [32.5, 7.0],
+                     [93.0, 77.0],  # Added landmarks for Robot 2
+                     [77.0, 87.0],
+                     [93.0, 87.0],
+                     [77.0, 37.0],
+                     [73.0, 86.5],
+                     [87.0, 73.0],
+                     [87.0, 97.0],
+                     [68.5, 93.0]])
 
     # State Vector [x y yaw v]'
     # xEst = np.zeros((STATE_SIZE, 1))
     xTrue1 = np.array([[20.0], [5.0], [0.0]])
-    xTrue2 = np.array([[25.0], [40.0], [3.14]])
+    xTrue2 = np.array([[80.0], [95.0], [3.14]])
     xEst1 = np.array([[20.0], [5.0], [0.0]])
-    xEst2 = np.array([[25.0], [40.0], [3.14]])
+    xEst2 = np.array([[80.0], [95.0], [3.14]])
     PEst1 = np.eye(STATE_SIZE)
     PEst2 = np.eye(STATE_SIZE)
 
