@@ -4,6 +4,7 @@ from robot import Robot
 from occupancy_grid import OccupancyGrid
 import json
 import matplotlib.pyplot as plt
+import sys
 
 
 def get_observation(pose, env):
@@ -110,20 +111,10 @@ def runMapping(typ="MULTI_ROBOT"):
 
 
 def runEKFSLAM():
-    # EKF state covariance
-    Cx = np.diag([0.5, 0.5, np.deg2rad(30.0)]) ** 2
-
-    #  Simulation parameter
-    Q_sim = np.diag([0.2, np.deg2rad(1.0)]) ** 2
-    R_sim = np.diag([1.0, np.deg2rad(10.0)]) ** 2
-
     DT = 0.1  # time tick [s]
     SIM_TIME = 150.0  # simulation time [s]
-    MAX_RANGE = 20.0  # maximum observation range
-    M_DIST_TH = 2.0  # Threshold of Mahalanobis distance for data association.
     STATE_SIZE = 3  # State size [x,y,yaw]
-    LM_SIZE = 2  # LM state size [x,y]
-
+    
     show_animation = True
 
     print(__file__ + " start!!")
@@ -154,7 +145,7 @@ def runEKFSLAM():
     hxDR = xTrue
     ts = 0
 
-    robot = Robot(dynamic_detection=False)
+    robot = Robot(dynamic_detection=True)
     while SIM_TIME >= time:
         print(robot.dynamic_objects)
         ts += 1
@@ -237,6 +228,131 @@ def runEKFSLAM():
             plt.yticks(minor_ticks)
             plt.grid(True)
             plt.pause(0.001)
+
+def runMultiRobotEKFSLAM(dd=False):
+    DT = 0.1  # time tick [s]
+    SIM_TIME = 150.0  # simulation time [s]
+    STATE_SIZE = 3  # State size [x,y,yaw]
+
+    show_animation = True
+
+    print(__file__ + " start!!")
+
+    time = 0.0
+
+    # RFID positions [x, y]
+    RFID = np.array([[7.0, 23.0],
+                     [23.0, 13.0],
+                     [7.0, 13.0],
+                     [23.0, 63.0],
+                     [27.0, 17.5],
+                     [17.0, 27.0],
+                     [17.0, 3.0],
+                     [32.5, 7.0]])
+
+    # State Vector [x y yaw v]'
+    #xEst = np.zeros((STATE_SIZE, 1))
+    xTrue = np.array([[20.0],[5.0],[0.0]])
+    xEst = np.array([[20.0],[5.0],[0.0]])
+    PEst = np.eye(STATE_SIZE)
+
+    xDR = np.zeros((STATE_SIZE, 1))  # Dead reckoning
+
+    # history
+    hxEst = xEst
+    hxTrue = xTrue
+    hxDR = xTrue
+    ts = 0
+
+    robot = Robot(dynamic_detection=dd)
+
+    while SIM_TIME >= time:
+        print(robot.dynamic_objects)
+        ts += 1
+        time += DT
+        # print(time)
+        if time > 40:
+            #print('LM changed')
+            RFID = np.array([[7.0, 23.0],
+                     [23.0, 13.0],
+                     [7.0, 13.0],
+                     [23.0, 63.0],
+                     [27.0, 34.0],
+                     [17.0, 27.0],
+                     [17.0, 3.0],
+                     [32.5, 7.0]])
+        if time > 70:
+            #print('LM changed')
+            RFID = np.array([[7.0, 23.0],
+                     [23.0, 13.0],
+                     [7.0, 13.0],
+                     [23.0, 63.0],
+                     [27.0, 34.0],
+                     [12.0, 17.0],
+                     [17.0, 3.0],
+                     [32.5, 7.0]])
+
+        u = robot.calc_input()
+
+        xTrue, z, xDR, ud = robot.observation(xTrue, xDR, u, RFID, time)
+                
+        xEst, PEst = robot.ekf_slam(xEst, PEst, ud, z)
+        
+        #print(len(xEst))
+            
+
+        x_state = xEst[0:STATE_SIZE]
+
+        # store data history
+        hxEst = np.hstack((hxEst, x_state))
+        hxDR = np.hstack((hxDR, xDR))
+        hxTrue = np.hstack((hxTrue, xTrue))
+        
+        errorX = hxTrue[0, :] - hxEst[0, :]
+        errorY = hxTrue[1, :] - hxEst[1, :]
+        
+        error = np.sum(np.sqrt(errorX**2 + errorY**2)) / ts
+        
+        #print(error)
+
+        if show_animation:  # pragma: no cover
+            plt.cla()
+
+            plt.plot(RFID[:, 0], RFID[:, 1], "*k")
+            plt.plot(xEst[0], xEst[1], ".r")
+
+            # plot landmark
+            for i in range(robot.calc_n_lm(xEst)):
+                plt.plot(xEst[STATE_SIZE + i * 2],
+                         xEst[STATE_SIZE + i * 2 + 1], "xg")
+
+            plt.plot(hxTrue[0, :],
+                     hxTrue[1, :], "-b")
+#             plt.plot(hxDR[0, :],
+#                      hxDR[1, :], "-k")
+            plt.plot(hxEst[0, :],
+                     hxEst[1, :], "-r")
+            
+            time_text = plt.text(10.02, 10.95, '')
+            
+            time_text2 = plt.text(45, 50.95, '')
+            
+            
+            time_text.set_text('err = %.1f' % error)
+            time_text2.set_text('time = %.1f' % time)
+            
+            plt.axis([0,50,0,50])
+            major_ticks = np.arange(0, 50, 5)
+            minor_ticks = np.arange(0, 50, 5)
+            plt.xticks(major_ticks)
+            plt.yticks(minor_ticks)
+            plt.grid(True)
+            plt.pause(0.001)
+
+
 if __name__ == "__main__":
-    runEKFSLAM()
+    dd = False
+    if sys.argv[1] == 'dd':
+        dd = True
+    runMultiRobotEKFSLAM(dd)
 
