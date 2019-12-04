@@ -110,8 +110,6 @@ def runMapping(typ="MULTI_ROBOT"):
 
 
 def runEKFSLAM():
-    np.random.seed(42)
-
     # EKF state covariance
     Cx = np.diag([0.5, 0.5, np.deg2rad(30.0)]) ** 2
 
@@ -156,7 +154,7 @@ def runEKFSLAM():
     hxDR = xTrue
     ts = 0
 
-    robot = Robot()
+    robot = Robot(dynamic_detection=False)
     while SIM_TIME >= time:
         print(robot.dynamic_objects)
         ts += 1

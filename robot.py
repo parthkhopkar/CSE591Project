@@ -5,7 +5,9 @@ import time as t
 
 class Robot(object):
 
-    def __init__(self, name=0, coord=(1, 1), dims=(10, 10)):
+    def __init__(self, name=0, coord=(1, 1), dims=(10, 10), seed=42, dynamic_detection=True):
+		self.seed = seed
+		self.dynamic_detection = dynamic_detection
         self.time = 0
         self.pos = coord
         self.name = name
@@ -95,16 +97,17 @@ class Robot(object):
         #print('Observation')
         # print(z)
         for iz in range(len(z[:, 0])):  # for each observation
-            # If z does not correspond to a static landmark, continue
-            '''x, y, theta = xEst[0], xEst[1], xEst[2]
-            x_lm = x + z[iz, 0] * math.cos(theta + z[iz, 1])
-            y_lm = y + z[iz, 0] * math.sin(theta + z[iz, 1])
-            X, Y = int(x_lm/self.gridSize), int(y_lm/self.gridSize)
-            # print(x_lm, X, y_lm, Y)
-            # print('S', X, Y, self.S.get_arr()[X, Y])
-            if self.S.get_arr()[X, Y] < 0.9:
-                print("not using %d, %d for localization\n"%(X,Y))
-                continue'''
+            if self.dynamic_detection:
+                # If z does not correspond to a static landmark, continue
+                x, y, theta = xEst[0], xEst[1], xEst[2]
+                x_lm = x + z[iz, 0] * math.cos(theta + z[iz, 1])
+                y_lm = y + z[iz, 0] * math.sin(theta + z[iz, 1])
+                X, Y = int(x_lm/self.gridSize), int(y_lm/self.gridSize)
+                # print(x_lm, X, y_lm, Y)
+                # print('S', X, Y, self.S.get_arr()[X, Y])
+                if self.S.get_arr()[X, Y] < 0.9:
+                    print("not using %d, %d for localization\n"%(X,Y))
+                    continue
 
             min_id = self.search_correspond_landmark_id(xEst, PEst, z[iz, 0:2])
 
@@ -146,7 +149,7 @@ class Robot(object):
             return []
 
     def observation(self, xTrue, xd, u, RFID, time):
-        np.random.seed(42)
+        np.random.seed(self.seed)
         xTrue = self.motion_model(xTrue, u)
 
         # add noise to gps x-y
