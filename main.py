@@ -272,9 +272,9 @@ def runMultiRobotEKFSLAM(dd=False):
                      [77.0, 87.0],
                      [93.0, 87.0],
                      [77.0, 37.0],
-                     [73.0, 86.5],
-                     [87.0, 73.0],
-                     [87.0, 97.0],
+                     [73.0, 82.0],
+                     [83.0, 73.0],
+                     [83.0, 97.0],
                      [68.5, 93.0]])
 
     # State Vector [x y yaw v]'
@@ -341,10 +341,10 @@ def runMultiRobotEKFSLAM(dd=False):
         u2 = robot2.calc_input(1.5, 0.2)
 
         xTrue1, z1, xDR1, ud1 = robot1.observation(xTrue1, xDR1, u1, RFID, time)
-        # xTrue2, z2, xDR2, ud2 = robot2.observation(xTrue2, xDR2, u2, RFID, time)
+        xTrue2, z2, xDR2, ud2 = robot2.observation(xTrue2, xDR2, u2, RFID, time)
 
         xEst1, PEst1 = robot1.ekf_slam(xEst1, PEst1, ud1, z1)
-        # xEst2, PEst2 = robot2.ekf_slam(xEst2, PEst2, ud2, z2)
+        xEst2, PEst2 = robot2.ekf_slam(xEst2, PEst2, ud2, z2)
 
         # print(len(xEst))
 
@@ -413,9 +413,9 @@ def runMultiRobotEKFSLAM(dd=False):
 
             time_text.set_text('time = %.1f' % time)
 
-            plt.axis([0, 50, 0, 50])
-            major_ticks = np.arange(0, 50, 5)
-            minor_ticks = np.arange(0, 50, 5)
+            plt.axis([0, 100, 0, 100])
+            major_ticks = np.arange(0, 100, 5)
+            minor_ticks = np.arange(0, 100, 5)
             plt.xticks(major_ticks)
             plt.yticks(minor_ticks)
             plt.grid(True)
