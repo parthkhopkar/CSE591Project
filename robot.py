@@ -1,6 +1,7 @@
 import numpy as np
 from occupancy_grid import OccupancyGrid
 import math
+import time as t
 
 class Robot(object):
 
@@ -12,7 +13,8 @@ class Robot(object):
         self.limits = dims
         self.obs = None
         self.dim = dims
-        self.obs_grid_size = 9
+        self.obs_grid_size = 3
+        self.gridSize = 5.0
         self.S = OccupancyGrid(False, dims[0], dims[1])
         self.D = OccupancyGrid(False, dims[0], dims[1])
         self.T = OccupancyGrid(length=dims[0], width=dims[1])
@@ -21,9 +23,8 @@ class Robot(object):
         self.C = 80.0
         self.DT = 0.1  # time tick [s]
         self.SIM_TIME = 150.0  # simulation time [s]
-        self.MAX_RANGE = 20.0  # maximum observation range
+        self.MAX_RANGE = int(( self.obs_grid_size * self.gridSize ) / math.sqrt(2) ) + 2.0 # maximum observation range
         self.M_DIST_TH = 2.0  # Threshold of Mahalanobis distance for data association.
-        self.gridSize = 4.0
         self.STATE_SIZE = 3  # State size [x,y,yaw]
         self.LM_SIZE = 2  # LM state size [x,y]
         # EKF state covariance
@@ -92,7 +93,7 @@ class Robot(object):
         PEst[0:S, 0:S] = G.T * PEst[0:S, 0:S] * G + Fx.T * self.Cx * Fx
         initP = np.eye(2)
         # Update
-        print('Observation')
+        #print('Observation')
         # print(z)
         for iz in range(len(z[:, 0])):  # for each observation
             # If z does not correspond to a static landmark, continue
@@ -103,6 +104,7 @@ class Robot(object):
             # print(x_lm, X, y_lm, Y)
             # print('S', X, Y, self.S.get_arr()[X, Y])
             if self.S.get_arr()[X, Y] < 0.9:
+                print("not using %d, %d for localization\n"%(X,Y))
                 continue
 
             min_id = self.search_correspond_landmark_id(xEst, PEst, z[iz, 0:2])
@@ -156,7 +158,7 @@ class Robot(object):
             dy = RFID[i, 1] - xTrue[1, 0]
             d = math.sqrt(dx ** 2 + dy ** 2)
             angle = self.pi_2_pi(math.atan2(dy, dx) - xTrue[2, 0])
-            if d <= self.MAX_RANGE:
+            if d <= self.MAX_RANGE: #Make this consistent with the other obseravtion model
                 dn = d + np.random.randn() * self.Q_sim[0, 0] ** 0.5  # add noise
                 angle_n = angle + np.random.randn() * self.Q_sim[1, 1] ** 0.5  # add noise
                 zi = np.array([dn, angle_n, i])
@@ -178,17 +180,18 @@ class Robot(object):
         X, Y = int(x/self.gridSize), int(y/self.gridSize)
         obs_list = []
         env = np.zeros((self.dim[0], self.dim[1]))  # Occupancy Grid version of environment
-        # print('Observation')
+        #print('Observation', z)
         for iz in range(len(z[:, 0])):
             x_obs = x + z[iz, 0] * math.cos(theta + z[iz, 1])
             y_obs = y + z[iz, 0] * math.sin(theta + z[iz, 1])
-            # print(x_obs, y_obs, iz)
-            obs_list.append((x_obs, y_obs, iz))
+            #t.sleep(1)
+            obs_list.append((x_obs, y_obs, z[iz, 2]))
             if self.D.get_arr()[int(x_obs/self.gridSize), int(y_obs/self.gridSize)] > 0.6 and iz not in self.dynamic_objects:
                 self.dynamic_objects.append(iz)
             env[int(x_obs/self.gridSize), int(y_obs/self.gridSize)] = 1
 
         observation = self.get_observation((X, Y), env)
+
         list_global = {}
         # print(np.rot90(observation))
         for i in range(self.obs_grid_size):
@@ -203,9 +206,11 @@ class Robot(object):
                 nx = gx - (shift_const - i)
                 ny = gy - (shift_const - j)
                 list_global[(nx, ny)] = observation[i][j]
+
         for pose, obs in list_global.items():
-            # print(self.get_static_inv_sensor_model(pose, obs))
-            # print(pose, obs)
+            if(pose==(6,1) and obs == 0):
+                print(X,Y,obs_list)
+                print(pose, obs)
             self.update_static_grid(self.get_static_inv_sensor_model(pose, obs), pose)
             self.update_dynamic_grid(self.get_dynamic_inv_sensor_model(pose, obs), pose)
             self.T.update(self.time, pose)
@@ -218,11 +223,11 @@ class Robot(object):
 
         # print(X, Y)
         # print(z)
-        np.set_printoptions(linewidth=np.inf, suppress=True, precision=1)
-        print('Static')
-        print(np.rot90(self.S.get_arr()))
-        print('Dynamic')
-        print(np.rot90(self.D.get_arr()))
+        np.set_printoptions(linewidth=np.inf, precision=3)
+        #print('Static')
+        #print(np.rot90(self.S.get_arr()))
+        #print('Dynamic')
+        #print(np.rot90(self.D.get_arr()))
         # print(np.rot90(env))
         return xTrue, z, xd, ud
 
@@ -403,7 +408,7 @@ class Robot(object):
         prev_S = self.S.get_arr()[pose]
         S_update = 0
         for x, y in np.ndindex(self.S.get_arr().shape):
-            c = np.exp(np.log(inv_sensor_model / (1 - inv_sensor_model)) + np.log(prev_S / (1.00001 - prev_S)))
+            c = np.exp(np.log(inv_sensor_model / (1.00001 - inv_sensor_model)) + np.log(prev_S / (1.00001 - prev_S)))
             S_update = c / (1 + c)
         self.S.update(S_update, pose)
 
@@ -411,7 +416,7 @@ class Robot(object):
         prev_D = self.D.get_arr()[pose]
         D_update = 0
         for x, y in np.ndindex(self.D.get_arr().shape):
-            c = np.exp(np.log(inv_sensor_model / (1 - inv_sensor_model)) + np.log(prev_D / (1.00001 - prev_D)))
+            c = np.exp(np.log(inv_sensor_model / (1.000001 - inv_sensor_model)) + np.log(prev_D / (1.00001 - prev_D)))
             D_update = c / (1 + c)
         self.D.update(D_update, pose)
 

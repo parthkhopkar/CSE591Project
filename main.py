@@ -133,14 +133,19 @@ def runEKFSLAM():
     time = 0.0
 
     # RFID positions [x, y]
-    RFID = np.array([[1.0, 1.0],
-                     [15.0, 10.0],
-                     [3.0, 15.0],
-                     [11.0, 5.0]])
+    RFID = np.array([[7.0, 23.0],
+                     [23.0, 13.0],
+                     [7.0, 13.0],
+                     [23.0, 63.0],
+                     [27.0, 17.5],
+                     [17.0, 27.0],
+                     [17.0, 3.0],
+                     [32.5, 7.0]])
 
     # State Vector [x y yaw v]'
-    xEst = np.zeros((STATE_SIZE, 1))
-    xTrue = np.zeros((STATE_SIZE, 1))
+    #xEst = np.zeros((STATE_SIZE, 1))
+    xTrue = np.array([[20.0],[5.0],[0.0]])
+    xEst = np.array([[20.0],[5.0],[0.0]])
     PEst = np.eye(STATE_SIZE)
 
     xDR = np.zeros((STATE_SIZE, 1))  # Dead reckoning
@@ -157,12 +162,26 @@ def runEKFSLAM():
         ts += 1
         time += DT
         # print(time)
-        if time > 9:
+        if time > 40:
             #print('LM changed')
-            RFID = np.array([[1.0, 1.0],
-                             [15.0, 10.0],
-                             [3.0, 15.0],
-                             [11.0, 9.0]])
+            RFID = np.array([[7.0, 23.0],
+                     [23.0, 13.0],
+                     [7.0, 13.0],
+                     [23.0, 63.0],
+                     [27.0, 34.0],
+                     [17.0, 27.0],
+                     [17.0, 3.0],
+                     [32.5, 7.0]])
+        if time > 70:
+            #print('LM changed')
+            RFID = np.array([[7.0, 23.0],
+                     [23.0, 13.0],
+                     [7.0, 13.0],
+                     [23.0, 63.0],
+                     [27.0, 34.0],
+                     [12.0, 17.0],
+                     [17.0, 3.0],
+                     [32.5, 7.0]])
 
         u = robot.calc_input()
 
@@ -205,12 +224,19 @@ def runEKFSLAM():
             plt.plot(hxEst[0, :],
                      hxEst[1, :], "-r")
             
-            time_text = plt.text(0.02, 0.95, '')
+            time_text = plt.text(10.02, 10.95, '')
+            
+            time_text2 = plt.text(45, 50.95, '')
             
             
             time_text.set_text('err = %.1f' % error)
+            time_text2.set_text('time = %.1f' % time)
             
-            plt.axis("equal")
+            plt.axis([0,50,0,50])
+            major_ticks = np.arange(0, 50, 5)
+            minor_ticks = np.arange(0, 50, 5)
+            plt.xticks(major_ticks)
+            plt.yticks(minor_ticks)
             plt.grid(True)
             plt.pause(0.001)
 if __name__ == "__main__":
