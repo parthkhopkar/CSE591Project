@@ -289,8 +289,8 @@ def runMultiRobotEKFSLAM(dd=False):
     xDR1 = np.zeros((STATE_SIZE, 1))  # Dead reckoning
     xDR2 = np.zeros((STATE_SIZE, 1))  # Dead reckoning
 
-    robot1 = Robot(dynamic_detection=dd)
-    robot2 = Robot(dynamic_detection=dd)
+    robot1 = Robot(name=1, dynamic_detection=dd)
+    robot2 = Robot(name=2, dynamic_detection=dd)
 
     # xEst1, PEst1, xDR1 = robot1.get_estimate()
     # xEst2, PEst2, xDR2 = robot2.get_estimate()
@@ -336,6 +336,13 @@ def runMultiRobotEKFSLAM(dd=False):
         #                      [27.0, 37.0],
         #                      [43.0, 37.0],
         #                      [32.5, 7.0]])
+
+
+        # Map sharing
+        if 3 < time < 3.5:
+            print("Sharing maps")
+            robot1.merge(robot2.S, robot2.D, robot2.T)
+            robot2.merge(robot1.S, robot1.D, robot1.T)
 
         u1 = robot1.calc_input()
         u2 = robot2.calc_input(1.5, 0.2)

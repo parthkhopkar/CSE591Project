@@ -112,7 +112,7 @@ class Robot(object):
                 # print(x_lm, X, y_lm, Y)
                 # print('S', X, Y, self.S.get_arr()[X, Y])
                 if self.S.get_arr()[X, Y] < 0.9:
-                    print("not using %d, %d for localization\n"%(X,Y))
+                    print(Robot, self.name, "not using %d, %d for localization\n"%(X, Y))
                     continue
 
             min_id = self.search_correspond_landmark_id(xEst, PEst, z[iz, 0:2])
@@ -223,6 +223,8 @@ class Robot(object):
             self.update_static_grid(self.get_static_inv_sensor_model(pose, obs), pose)
             self.update_dynamic_grid(self.get_dynamic_inv_sensor_model(pose, obs), pose)
             self.T.update(self.time, pose)
+
+        self.update_time()
 
         # dObj = self.getDynamicObjects(time)
         # Check if any observation is a dynamic object
@@ -353,7 +355,7 @@ class Robot(object):
     def merge(self, robot_S, robot_D, robot_T):
         for i in range(self.limits[0]):
             for j in range(self.limits[1]):
-                if robot_T[i, j] > self.T.get_arr()[i, j]:
+                if robot_T.get_arr()[i, j] > self.T.get_arr()[i, j]:
                     self.S.update(robot_S[i, j], (i, j))
                     self.D.update(robot_D[i, j], (i, j))
                     self.T.update(robot_T[i, j], (i, j))
