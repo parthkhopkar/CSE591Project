@@ -263,7 +263,6 @@ def runMultiRobotEKFSLAM(dd=False):
     RFID = np.array([[7.0, 23.0],
                      [23.0, 13.0],
                      [7.0, 13.0],
-                     [23.0, 63.0],
                      [27.0, 17.5],
                      [17.0, 27.0],
                      [17.0, 3.0],
@@ -309,19 +308,22 @@ def runMultiRobotEKFSLAM(dd=False):
         ts += 1
         time += DT
         # print(time)
-        # if time > 40:
-        #     # print('LM changed')
-        #     RFID = np.array([[7.0, 23.0],
-        #                      [23.0, 13.0],
-        #                      [7.0, 13.0],
-        #                      [23.0, 33.0],
-        #                      [27.0, 34.0],
-        #                      [17.0, 27.0],
-        #                      [17.0, 3.0],
-        #                      [43.0, 27.0],
-        #                      [27.0, 37.0],
-        #                      [43.0, 37.0],
-        #                      [32.5, 7.0]])
+        if time > 22:
+            # print('LM changed')
+            RFID = np.array([[7.0, 23.0],
+                             [23.0, 13.0],
+                             [7.0, 13.0],
+                             [27.0, 17.5],
+                             [17.0, 27.0],
+                             [17.0, 3.0],
+                             [32.5, 7.0],
+                             [27.0, 47.0],  # Added landmarks for Robot 2
+                             [33.0, 27.0],
+                             [37.0, 43.0],
+                             [43.0, 53.0],
+                             [43.0, 27.0],
+                             [53.0, 43.0],
+                             [53.0, 33.0]])
         # if time > 70:
         #     # print('LM changed')
         #     RFID = np.array([[7.0, 23.0],
@@ -338,10 +340,9 @@ def runMultiRobotEKFSLAM(dd=False):
 
 
         # Map sharing
-        if 3 < time < 3.5:
-            print("Sharing maps")
-            robot1.merge(robot2.S, robot2.D, robot2.T)
-            robot2.merge(robot1.S, robot1.D, robot1.T)
+        print("Sharing maps")
+        robot1.merge(robot2.S, robot2.D, robot2.T)
+        robot2.merge(robot1.S, robot1.D, robot1.T)
 
         u1 = robot1.calc_input()
         u2 = robot2.calc_input(1.5, 0.2)
