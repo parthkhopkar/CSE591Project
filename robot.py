@@ -217,14 +217,15 @@ class Robot(object):
                 list_global[(nx, ny)] = observation[i][j]
 
         for pose, obs in list_global.items():
-            if(pose==(6,1) and obs == 0):
-                print(X,Y,obs_list)
-                print(pose, obs)
+            # if(pose==(6,1) and obs == 0):
+            #     print(X,Y,obs_list)
+            print(pose, obs)
             self.update_static_grid(self.get_static_inv_sensor_model(pose, obs), pose)
             self.update_dynamic_grid(self.get_dynamic_inv_sensor_model(pose, obs), pose)
-            self.T.update(self.time, pose)
+            self.T.update(time, pose)
 
         self.update_time()
+        print(self.T.get_arr())
 
         # dObj = self.getDynamicObjects(time)
         # Check if any observation is a dynamic object
@@ -356,9 +357,9 @@ class Robot(object):
         for i in range(self.limits[0]):
             for j in range(self.limits[1]):
                 if robot_T.get_arr()[i, j] > self.T.get_arr()[i, j]:
-                    self.S.update(robot_S[i, j], (i, j))
-                    self.D.update(robot_D[i, j], (i, j))
-                    self.T.update(robot_T[i, j], (i, j))
+                    self.S.update(robot_S.get_arr()[i, j], (i, j))
+                    self.D.update(robot_D.get_arr()[i, j], (i, j))
+                    self.T.update(robot_T.get_arr()[i, j], (i, j))
 
     def get_position(self):
         return self.pos
