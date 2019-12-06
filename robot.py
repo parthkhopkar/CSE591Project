@@ -5,7 +5,7 @@ import time as t
 
 class Robot(object):
 
-    def __init__(self, name=0, init_coord=(1, 1), dims=(20, 20), seed=42, dynamic_detection=True):
+    def __init__(self, name=0, init_coord=(1, 1), dims=(20, 20), seed=100, dynamic_detection=True):
         self.seed = seed
         self.dynamic_detection = dynamic_detection
         self.time = 0

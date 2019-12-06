@@ -5,6 +5,7 @@ from occupancy_grid import OccupancyGrid
 import json
 import matplotlib.pyplot as plt
 import sys
+import pickle
 
 
 def get_observation(pose, env):
@@ -243,12 +244,16 @@ def runEKFSLAM(dd, dynamic_lm):
     plt.xlabel('Time')
     plt.ylabel('Localization Error')
     plt.plot(times, hError)
-    plt.savefig('static_1_error.png')
+    plt.savefig('dynamic_lm_1_error_ndd.png')
+    with open('dynamic_lm_1_error_ndd.pkl', 'wb') as f1:
+        pickle.dump(hError, f1)
+    with open('dynamic_lm_1_error_ndd_time.pkl', 'wb') as f2:
+        pickle.dump(times, f2)
 
 
 def runMultiRobotEKFSLAM(dd, dynamic_lm):
     DT = 0.1  # time tick [s]
-    SIM_TIME = 150.0  # simulation time [s]
+    SIM_TIME = 120.0  # simulation time [s]
     STATE_SIZE = 3  # State size [x,y,yaw]
 
     show_animation = True
@@ -315,10 +320,15 @@ def runMultiRobotEKFSLAM(dd, dynamic_lm):
 
     ts = 0
 
+    times = []
+    hError1 = []
+    hError2 = []
+
     while SIM_TIME >= time:
         # print(robot.dynamic_objects)
         ts += 1
         time += DT
+        times.append(time)
         # print(time)
         if dynamic_lm:
             if time > 22:
@@ -354,7 +364,7 @@ def runMultiRobotEKFSLAM(dd, dynamic_lm):
 
 
         # Map sharing
-        print("Sharing maps")
+        # print("Sharing maps")
         robot1.merge(robot2.S, robot2.D, robot2.T)
         robot2.merge(robot1.S, robot1.D, robot1.T)
 
@@ -392,6 +402,8 @@ def runMultiRobotEKFSLAM(dd, dynamic_lm):
 
         error2 = np.sum(np.sqrt(errorX2 ** 2 + errorY2 ** 2)) / ts
 
+        hError1.append(error1)
+        hError2.append(error2)
         # print(error)
 
         if show_animation:  # pragma: no cover
@@ -441,6 +453,21 @@ def runMultiRobotEKFSLAM(dd, dynamic_lm):
             plt.yticks(minor_ticks)
             plt.grid(True)
             plt.pause(0.001)
+
+    plt.cla()
+    plt.xlabel('Time')
+    plt.ylabel('Localization Error')
+    plt.plot(times, hError1, '-r')
+    plt.plot(times, hError2, '-g')
+    plt.savefig('dynamic_lm_2_error_dd_ms.png')
+    with open('dynamic_lm_2_error_dd_ms_robot_1.pkl', 'wb') as f:
+        pickle.dump(hError1, f)
+    with open('dynamic_lm_2_error_dd_ms_robot_2.pkl', 'wb') as f:
+        pickle.dump(hError2, f)
+    with open('dynamic_lm_2_error_dd_ms_time.pkl', 'wb') as f:
+        pickle.dump(times, f)
+
+
 
 
 if __name__ == "__main__":
