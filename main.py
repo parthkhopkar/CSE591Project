@@ -273,7 +273,8 @@ def runMultiRobotEKFSLAM(dd=False):
                      [43.0, 53.0],
                      [43.0, 27.0],
                      [53.0, 43.0],
-                     [53.0, 33.0]])
+                     [53.0, 33.0],
+                     [37.0, 33.0]])
 
     # State Vector [x y yaw v]'
     # xEst = np.zeros((STATE_SIZE, 1))
@@ -323,7 +324,8 @@ def runMultiRobotEKFSLAM(dd=False):
                              [43.0, 53.0],
                              [43.0, 27.0],
                              [53.0, 43.0],
-                             [53.0, 33.0]])
+                             [53.0, 33.0],
+                             [37.0, 33.0]])
         # if time > 70:
         #     # print('LM changed')
         #     RFID = np.array([[7.0, 23.0],
@@ -344,8 +346,8 @@ def runMultiRobotEKFSLAM(dd=False):
         robot1.merge(robot2.S, robot2.D, robot2.T)
         robot2.merge(robot1.S, robot1.D, robot1.T)
 
-        u1 = robot1.calc_input()
-        u2 = robot2.calc_input(1.5, 0.2)
+        u1 = robot1.calc_input(robot1.name, time, 1.0, 0.1)
+        u2 = robot2.calc_input(robot2.name, time, 1.0, 0.1)
 
         xTrue1, z1, xDR1, ud1 = robot1.observation(xTrue1, xDR1, u1, RFID, time)
         xTrue2, z2, xDR2, ud2 = robot2.observation(xTrue2, xDR2, u2, RFID, time)

@@ -142,10 +142,13 @@ class Robot(object):
         xEst[2] = self.pi_2_pi(xEst[2])
         return xEst, PEst
 
-    def calc_input(self, v=1.0, y=0.1):
-        v = 1.0  # [m/s]
-        yaw_rate = 0.1  # [rad/s]
-        u = np.array([[v, yaw_rate]]).T
+    def calc_input(self, name, time, v=1.0, yaw_rate=0.1):
+        # v = 1.0  # [m/s]
+        # yaw_rate = 0.1  # [rad/s]
+        if name == 1 and 10 < time < 20:
+            u = np.array([[0, 0]]).T
+        else:
+            u = np.array([[v, yaw_rate]]).T
         return u
 
     def getDynamicObjects(self, D, z):
@@ -224,8 +227,8 @@ class Robot(object):
             self.update_dynamic_grid(self.get_dynamic_inv_sensor_model(pose, obs), pose)
             self.T.update(time, pose)
 
-        self.update_time()
-        print(self.T.get_arr())
+        self.update_time(time)
+
 
         # dObj = self.getDynamicObjects(time)
         # Check if any observation is a dynamic object
@@ -235,7 +238,8 @@ class Robot(object):
 
         # print(X, Y)
         # print(z)
-        np.set_printoptions(linewidth=np.inf, precision=3)
+        np.set_printoptions(linewidth=np.inf, precision=3, suppress=True)
+        print(np.rot90(self.T.get_arr()))
         #print('Static')
         #print(np.rot90(self.S.get_arr()))
         #print('Dynamic')
@@ -347,11 +351,11 @@ class Robot(object):
     def pi_2_pi(self, angle):
         return (angle + math.pi) % (2 * math.pi) - math.pi
 
-    def update_time(self):
+    def update_time(self, time):
         observed = np.array(self.T.get_arr() > 0, np.int)
-        delT = np.full((self.limits[0], self.limits[1]), self.time) * observed - self.T.get_arr()
+        delT = np.full((self.limits[0], self.limits[1]), time) * observed - self.T.get_arr()
         delT = delT / self.C
-        self.T.mat = self.T.mat - delT
+        self.T.mat = self.T.mat * (1 - delT)
 
     def merge(self, robot_S, robot_D, robot_T):
         for i in range(self.limits[0]):
