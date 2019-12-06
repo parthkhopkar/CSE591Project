@@ -112,7 +112,7 @@ class Robot(object):
                 # print(x_lm, X, y_lm, Y)
                 # print('S', X, Y, self.S.get_arr()[X, Y])
                 if self.S.get_arr()[X, Y] < 0.9:
-                    print(Robot, self.name, "not using %d, %d for localization\n"%(X, Y))
+                    # print(Robot, self.name, "not using %d, %d for localization\n"%(X, Y))
                     continue
 
             min_id = self.search_correspond_landmark_id(xEst, PEst, z[iz, 0:2])
@@ -222,7 +222,7 @@ class Robot(object):
         for pose, obs in list_global.items():
             # if(pose==(6,1) and obs == 0):
             #     print(X,Y,obs_list)
-            print(pose, obs)
+            # print(pose, obs)
             self.update_static_grid(self.get_static_inv_sensor_model(pose, obs), pose)
             self.update_dynamic_grid(self.get_dynamic_inv_sensor_model(pose, obs), pose)
             self.T.update(time, pose)
@@ -239,7 +239,7 @@ class Robot(object):
         # print(X, Y)
         # print(z)
         np.set_printoptions(linewidth=np.inf, precision=3, suppress=True)
-        print(np.rot90(self.T.get_arr()))
+        # print(np.rot90(self.T.get_arr()))
         #print('Static')
         #print(np.rot90(self.S.get_arr()))
         #print('Dynamic')

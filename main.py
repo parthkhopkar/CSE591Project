@@ -111,9 +111,9 @@ def runMapping(typ="MULTI_ROBOT"):
         print(np.round(R1.D.get_arr()))
 
 
-def runEKFSLAM(dd=True):
+def runEKFSLAM(dd, dynamic_lm):
     DT = 0.1  # time tick [s]
-    SIM_TIME = 200.0  # simulation time [s]
+    SIM_TIME = 120.0  # simulation time [s]
     STATE_SIZE = 3  # State size [x,y,yaw]
 
     show_animation = True
@@ -145,33 +145,37 @@ def runEKFSLAM(dd=True):
     hxTrue = xTrue
     hxDR = xTrue
     ts = 0
+    times = []
+    hError = []
 
     robot = Robot(dynamic_detection=dd)
     while SIM_TIME >= time:
         # print(robot.dynamic_objects)
         ts += 1
         time += DT
+        times.append(time)
         # print(time)
-        if time > 40:
-            # print('LM changed')
-            RFID = np.array([[7.0, 23.0],
-                             [23.0, 13.0],
-                             [7.0, 13.0],
-                             [23.0, 63.0],
-                             [27.0, 34.0],
-                             [17.0, 27.0],
-                             [17.0, 3.0],
-                             [32.5, 7.0]])
-        if time > 70:
-            # print('LM changed')
-            RFID = np.array([[7.0, 23.0],
-                             [23.0, 13.0],
-                             [7.0, 13.0],
-                             [23.0, 63.0],
-                             [27.0, 34.0],
-                             [12.0, 17.0],
-                             [17.0, 3.0],
-                             [32.5, 7.0]])
+        if dynamic_lm:
+            if time > 40:
+                # print('LM changed')
+                RFID = np.array([[7.0, 23.0],
+                                 [23.0, 13.0],
+                                 [7.0, 13.0],
+                                 [23.0, 63.0],
+                                 [27.0, 34.0],
+                                 [17.0, 27.0],
+                                 [17.0, 3.0],
+                                 [32.5, 7.0]])
+            if time > 70:
+                # print('LM changed')
+                RFID = np.array([[7.0, 23.0],
+                                 [23.0, 13.0],
+                                 [7.0, 13.0],
+                                 [23.0, 63.0],
+                                 [27.0, 34.0],
+                                 [12.0, 17.0],
+                                 [17.0, 3.0],
+                                 [32.5, 7.0]])
 
         u = robot.calc_input(1.5, 0.2)
 
@@ -192,7 +196,7 @@ def runEKFSLAM(dd=True):
         errorY = hxTrue[1, :] - hxEst[1, :]
 
         error = np.sum(np.sqrt(errorX ** 2 + errorY ** 2)) / ts
-
+        hError.append(error)
         # print(error)
 
         if show_animation:  # pragma: no cover
@@ -231,11 +235,18 @@ def runEKFSLAM(dd=True):
             plt.yticks(minor_ticks)
             plt.grid(True)
             plt.pause(0.001)
-    robot.S.show(False)
-    robot.D.show(False)
+    # robot.S.show(False)
+    # robot.D.show(False)
+
+    # Plot error
+    plt.cla()
+    plt.xlabel('Time')
+    plt.ylabel('Localization Error')
+    plt.plot(times, hError)
+    plt.savefig('static_1_error.png')
 
 
-def runMultiRobotEKFSLAM(dd=False):
+def runMultiRobotEKFSLAM(dd, dynamic_lm):
     DT = 0.1  # time tick [s]
     SIM_TIME = 150.0  # simulation time [s]
     STATE_SIZE = 3  # State size [x,y,yaw]
@@ -309,36 +320,37 @@ def runMultiRobotEKFSLAM(dd=False):
         ts += 1
         time += DT
         # print(time)
-        if time > 22:
-            # print('LM changed')
-            RFID = np.array([[7.0, 23.0],
-                             [23.0, 13.0],
-                             [7.0, 13.0],
-                             [27.0, 17.5],
-                             [17.0, 27.0],
-                             [17.0, 3.0],
-                             [32.5, 7.0],
-                             [27.0, 47.0],  # Added landmarks for Robot 2
-                             [33.0, 27.0],
-                             [37.0, 43.0],
-                             [43.0, 53.0],
-                             [43.0, 27.0],
-                             [53.0, 43.0],
-                             [53.0, 33.0],
-                             [37.0, 33.0]])
-        # if time > 70:
-        #     # print('LM changed')
-        #     RFID = np.array([[7.0, 23.0],
-        #                      [23.0, 13.0],
-        #                      [7.0, 13.0],
-        #                      [23.0, 33.0],
-        #                      [27.0, 34.0],
-        #                      [12.0, 17.0],
-        #                      [17.0, 3.0],
-        #                      [43.0, 27.0],
-        #                      [27.0, 37.0],
-        #                      [43.0, 37.0],
-        #                      [32.5, 7.0]])
+        if dynamic_lm:
+            if time > 22:
+                # print('LM changed')
+                RFID = np.array([[7.0, 23.0],
+                                 [23.0, 13.0],
+                                 [7.0, 13.0],
+                                 [27.0, 17.5],
+                                 [17.0, 27.0],
+                                 [17.0, 3.0],
+                                 [32.5, 7.0],
+                                 [27.0, 47.0],  # Added landmarks for Robot 2
+                                 [33.0, 27.0],
+                                 [37.0, 43.0],
+                                 [43.0, 53.0],
+                                 [43.0, 27.0],
+                                 [53.0, 43.0],
+                                 [53.0, 33.0],
+                                 [37.0, 33.0]])
+            # if time > 70:
+            #     # print('LM changed')
+            #     RFID = np.array([[7.0, 23.0],
+            #                      [23.0, 13.0],
+            #                      [7.0, 13.0],
+            #                      [23.0, 33.0],
+            #                      [27.0, 34.0],
+            #                      [12.0, 17.0],
+            #                      [17.0, 3.0],
+            #                      [43.0, 27.0],
+            #                      [27.0, 37.0],
+            #                      [43.0, 37.0],
+            #                      [32.5, 7.0]])
 
 
         # Map sharing
@@ -432,8 +444,16 @@ def runMultiRobotEKFSLAM(dd=False):
 
 
 if __name__ == "__main__":
-    # dd = False
-    # if sys.argv[1] == 'dd':
-    #     dd = True
-    # runEKFSLAM(dd)
-    runMultiRobotEKFSLAM(dd=True)
+    dd = False
+    dynamic_lm = False
+    n = sys.argv[2]
+    if sys.argv[3] == 'True':
+        dynamic_lm = True
+    if sys.argv[1] == 'dd':
+        dd = True
+    if n == '1':
+        print('run1')
+        runEKFSLAM(dd, dynamic_lm)
+    else:
+        print('run2')
+        runMultiRobotEKFSLAM(dd, dynamic_lm)
